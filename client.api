@@ -1,0 +1,78 @@
+<?php
+
+$root_url 		= 	'http://seeking-wonderland.com/pcfoster/test3/';
+$html_title 	= 	'PCFoster | REST PHP JSON | Deltak';
+$page_title 	= 	'';
+$select_html 	= 	'';
+$page_body 		= 	'';
+
+// foregoing any mod_rewrite games in the htaccess, the id argument will be in in the query string:	
+$id = ($_GET['id']) ? $_GET['id'] : 'none';
+
+// get all data for select element and specific id data for branding
+// get is default method for curl
+// everything goes in $ch_result for now
+$url = $root_url . 'api.php?id=' . $id;
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$ch_result = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+if ( $httpCode < 400 ) {
+	$branding_obj = json_decode($ch_result);
+}
+
+if ( isset($branding_obj->all_keys) ) {
+	// create select html for branding nav
+	
+	$select_html = '
+		<select id="branding_select" onchange="changeBranding(this.value);">
+		<option value="">Choose branding key</option>
+	';
+	foreach($branding_obj->all_keys as $key) { 
+		$select_html .= '<option value="' . $key . '">' . $key . '</option>';
+	}
+	$select_html .= '</select>';
+	$select_html .= '
+		<script type="text/javascript">
+			function changeBranding(val) {
+				if ( val > "" ) {
+					document.location.href = "' . $root_url . 'client.php?id="+val;
+				}
+			}
+		</script>
+	';
+}
+
+if ( isset($branding_obj->branding_data) ) {
+	// create select html for branding nav
+	$brand = $branding_obj->branding_data;
+	$page_body = '<img src="' . $brand->logo . '" />';
+	$page_body .= '<h1>' . $brand->name . '</h1>';
+	$page_body .= '<code>';
+	$page_body .= 'logo: ' . $brand->logo . ' <br/>';
+	$page_body .= 'name: ' .  $brand->name . '<br/>';
+	$page_body .= 'url: ' .  $brand->url . '<br/>';
+	$page_body .= '</code>';
+	
+	
+}
+
+
+?>
+
+<!doctype html>
+<html lang="en-US">
+<head>
+<title><?php print $html_title; ?></title>
+</head>
+<body>
+
+<?php print $page_body; ?>
+
+<nav><?php print $select_html; ?></nav>
+
+</body>
+</html>
